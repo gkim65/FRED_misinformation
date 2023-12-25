@@ -1,0 +1,87 @@
+# TODO: How to set number of agents?
+# TODO: how to handle data output?
+
+# Simulated Location
+locations = Jefferson_County_PA
+
+# Simulated Time Frame
+start_date = 2020-Jan-01
+end_date = 2021-Jan-01
+
+
+# CONDITIONS
+include_condition = ADOPT
+include_condition = SKEPTIC
+
+# STATES
+ADOPT.states = S ADOPT_exposed E I Import
+ADOPT.import_start_state = Import
+SKEPTIC.states = S SKEPTIC_exposed Z Import
+SKEPTIC.import_start_state = Import
+
+# TRANSMISSION
+ADOPT.transmission_mode = proximity
+SKEPTIC.transmission_mode = proximity
+
+# VARIABLES
+# beta     # S-I contact rate
+# b        # S-Z contact rate
+# rho      # E-I contact rate
+include_global_variable = epsilon # incubation rate
+include_global_variable = l       # S->Z prob. given contact with skeptics (Z)
+include_global_variable = p       # S->I prob. given contact with adopters (I)
+
+epsilon = 0.5
+l = 0.9
+p = 0.9
+
+
+# RULES
+
+#if exposed(SKEPTIC) then next(Z) with prob(l)
+#if exposed(SKEPTIC) then set_state(ADOPT,S,E) with prob(1-l)
+
+#if exposed(ADOPT) then next(I) with prob(p)
+#if exposed(ADOPT) then next(E) with prob(1-p)
+
+if exposed(SKEPTIC) then next(SKEPTIC_exposed)
+if exposed(ADOPT) then next(ADOPT_exposed)
+
+if state(ADOPT,S) then set_sus(ADOPT,1)
+if state(ADOPT,S) then set_trans(ADOPT,0)
+if state(ADOPT,S) then set_sus(SKEPTIC,1)
+if state(ADOPT,S) then set_trans(SKEPTIC,0)
+if state(ADOPT,S) then wait()
+
+if state(SKEPTIC,S) then set_sus(ADOPT,1)
+if state(SKEPTIC,S) then set_trans(ADOPT,0)
+if state(SKEPTIC,S) then set_sus(SKEPTIC,1)
+if state(SKEPTIC,S) then set_trans(SKEPTIC,0)
+if state(SKEPTIC,S) then wait()
+
+if state(SKEPTIC,SKEPTIC_exposed) then next(Z) with prob(l)
+if state(SKEPTIC,SKEPTIC_exposed) then set_state(ADOPT,S,E)
+#if state(SKEPTIC,SKEPTIC_exposed) then wait()
+
+if state(ADOPT,ADOPT_exposed) then next(I) with prob(p)
+if state(ADOPT,ADOPT_exposed) then next(E) with prob(1-p)
+#if state(ADOPT,ADOPT_exposed) then wait()
+
+# NOTE: still susceptible as exposed
+if state(ADOPT,E) then set_sus(SKEPTIC,0)
+if state(ADOPT,E) then wait(1/epsilon) # TODO: make this a distribution; not sure which
+if state(ADOPT,E) then next(I)
+
+if state(ADOPT,I) then set_sus(ADOPT,0) # no longer susceptible once infected
+if state(ADOPT,I) then set_trans(ADOPT,1)
+if state(ADOPT,I) then wait()
+
+if state(SKEPTIC,Z) then set_trans(SKEPTIC,1)
+if state(SKEPTIC,Z) then set_sus(ADOPT,0)
+if state(SKEPTIC,Z) then wait()
+
+# IMPORT INFECTIONS/SKEPTICISM
+if state(ADOPT,Import) then import_count(10)
+if state(ADOPT,Import) then wait()
+if state(SKEPTIC,Import) then import_count(10)
+if state(SKEPTIC,Import) then wait()
