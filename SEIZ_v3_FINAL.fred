@@ -1,0 +1,104 @@
+#####################################################
+# File: SEIZ.fred
+# Author: Grace Kim
+# Date: 8 Jan 2023
+# Simulated Location: a small county in Pennsylvania
+#Jefferson_County_PA
+locations = Jefferson_County_PA
+
+# Simulated Time Frame
+start_date = 2020-Jan-01
+end_date = 2020-Apr-30
+
+########## SKEPTIC RULES:
+
+# CONDITIONS
+include_condition = SKEPTIC
+include_condition = ADOPT
+
+# STATES
+SKEPTIC.states = S InBetween E Z Import
+SKEPTIC.import_start_state = Import
+ADOPT.states = S InBetween E I Import
+ADOPT.import_start_state = Import
+
+# TRANSMISSION
+SKEPTIC.transmission_mode = proximity
+SKEPTIC.transmissibility = 1.0
+ADOPT.transmission_mode = proximity
+ADOPT.transmissibility = 1.0
+
+# VARIABLES
+include_global_variable = l
+include_global_variable = p
+include_global_variable = epsilon
+
+p = 0.9
+epsilon = 2
+l = 0.9
+
+# RULES
+
+# If you come into contact with any SKEPTIC then go into choosing SKEPTIC state
+if exposed(SKEPTIC) then next(InBetween)
+
+# If you come into contact with any ADOPT then go into choosing SKEPTIC state
+if exposed(ADOPT) then next(InBetween)
+
+# if susceptible state, be susceptible to anything, but can't transmit (for both SKEPTIC and ADOPT)
+if state(SKEPTIC,S) then set_sus(SKEPTIC,1)
+if state(SKEPTIC,S) then set_trans(SKEPTIC,0)
+if state(SKEPTIC,S) then wait()
+if state(ADOPT,S) then set_sus(ADOPT,1)
+if state(ADOPT,S) then set_trans(ADOPT,0)
+if state(ADOPT,S) then wait()
+
+# trying to determine if you should go directly to I or E (ADOPT)
+if state(ADOPT,InBetween) then next(I) with prob(p)
+if state(ADOPT,InBetween) then next(E) with prob(1-p)
+
+# trying to determine if you should go directly to Z or E (SKEPTIC)
+if state(SKEPTIC,InBetween) then next(Z) with prob(l)
+if state(SKEPTIC,InBetween) then next(E) with prob(1-l)
+
+# If SKEPTIC, but exposed, make into ADOPT into I from waiting
+if state(SKEPTIC,E) then set_sus(SKEPTIC,0)
+if state(SKEPTIC,E) then set_trans(SKEPTIC,0)
+if state(SKEPTIC,E) then wait(24 * normal(epsilon, epsilon/2))
+# Taking into account every ADOPT case at that moment
+if state(SKEPTIC,E) then set_state(ADOPT,InBetween,I)
+if state(SKEPTIC,E) then set_state(ADOPT,S,I)
+if state(SKEPTIC,E) then set_state(ADOPT,E,I)
+if state(SKEPTIC,E) then set_sus(ADOPT,0)
+if state(SKEPTIC,E) then set_trans(ADOPT,1)
+if state(SKEPTIC,E) then wait()
+
+# IF ADOPT and exposed, then wait for a bit and turn into I
+if state(ADOPT,E) then set_sus(SKEPTIC,0)
+if state(ADOPT,E) then wait(24 * normal(epsilon, epsilon/2))
+if state(ADOPT,E) then next(I)
+
+# If becoming an full SKEPTIC, can't be other group, set InBetween to S
+if state(SKEPTIC,Z) then set_trans(SKEPTIC,1)
+if state(SKEPTIC,Z) then set_sus(SKEPTIC,0)
+if state(SKEPTIC,Z) then set_sus(ADOPT,0)
+if state(SKEPTIC,Z) then set_trans(ADOPT,0)
+if state(SKEPTIC,Z) then set_state(ADOPT,InBetween,S)
+if state(SKEPTIC,Z) then wait()
+
+# If becoming full ADOPT, can't be part of SKEPTIC
+if state(ADOPT,I) then set_trans(ADOPT,1)
+if state(ADOPT,I) then set_sus(ADOPT,0)
+if state(ADOPT,I) then set_sus(SKEPTIC,0)
+if state(ADOPT,I) then set_trans(SKEPTIC,0)
+if state(ADOPT,I) then wait()
+
+
+### NUMBERS SET NUMBER OF STARTING CASES
+SKEPTIC.Import.import_max_cases = 100
+if state(SKEPTIC,Import) then wait()
+
+ADOPT.Import.import_max_cases = 1
+if state(ADOPT,Import) then wait()
+
+
