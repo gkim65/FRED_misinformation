@@ -1,0 +1,6 @@
+jupyter==1.0.0
+gpy==1.10.0
+numpy==1.24.4
+pandas==2.1.4
+matplotlib==3.8.2
+emukit==0.4.10
