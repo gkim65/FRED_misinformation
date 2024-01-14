@@ -56,15 +56,17 @@ if state(ADOPT,S) then wait()
 # Exposed to ADOPT -> InBetween state; determine if agent should go directly to I or E (ADOPT)
 if state(ADOPT,InBetween) then next(I) with prob(p)
 if state(ADOPT,InBetween) then next(E) with prob(1-p)
+if state(ADOPT,InBetween) then wait()
 
 # Exposed to SKEPTIC -> trying to determine if you should go directly to Z or E (SKEPTIC)
 if state(SKEPTIC,InBetween) then set_sus(SKEPTIC,0)
 if state(SKEPTIC,InBetween) then next(Z) with prob(l)
 if state(SKEPTIC,InBetween) then next(R) with prob(1-l)
+if state(SKEPTIC,InBetween) then wait() # This technically isn't necessary, but it suppresses some warnings
 
 # Streisand effect; exposure to SKEPTIC causes agent to ADOPT
 if state(SKEPTIC,R) then set_state(ADOPT,S,E)
-if state(SKEPTIC,R) then wait()
+if state(SKEPTIC,R) then wait() # This technically isn't necessary, but it suppresses some warnings
 
 # If incubating ADOPT, then wait for a bit and turn into I
 if state(ADOPT,E) then wait(24 * epsilon)
