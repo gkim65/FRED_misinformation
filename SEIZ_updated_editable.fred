@@ -82,10 +82,10 @@ if state(ADOPT,I) then wait()
 
 
 ### NUMBERS SET NUMBER OF STARTING CASES
-SKEPTIC.Import.import_max_cases = 100
+SKEPTIC.Import.import_max_cases = {init_skeptic}
 if state(SKEPTIC,Import) then wait()
 
-ADOPT.Import.import_max_cases = 1
+ADOPT.Import.import_max_cases = {init_adopt}
 if state(ADOPT,Import) then wait()
 
 
