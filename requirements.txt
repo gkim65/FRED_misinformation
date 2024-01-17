@@ -5,3 +5,4 @@ pandas==2.1.4
 matplotlib==3.8.2
 emukit==0.4.10
 pydoe==0.3.8
+scikit-learn=1.3.2
